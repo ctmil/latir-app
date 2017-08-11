@@ -1,4 +1,4 @@
-// (c) 2013-2015 Don Coleman
+// (c) 2014 Don Coleman
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,102 +12,109 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/* global mainPage, deviceList, refreshButton, statusDiv */
+/* global mainPage, deviceList, refreshButton */
 /* global detailPage, resultDiv, messageInput, sendButton, disconnectButton */
-/* global cordova, bluetoothSerial  */
+/* global ble  */
 /* jshint browser: true , devel: true*/
 'use strict';
+
+// ASCII only
+function bytesToString(buffer) {
+    return String.fromCharCode.apply(null, new Uint8Array(buffer));
+}
+
+// ASCII only
+function stringToBytes(string) {
+    var array = new Uint8Array(string.length);
+    for (var i = 0, l = string.length; i < l; i++) {
+        array[i] = string.charCodeAt(i);
+    }
+    return array.buffer;
+}
+
+// this is Nordic's UART service
+/*var bluefruit = {
+    serviceUUID: '0000ffe0-0000-1000-8000-00805f9b34fb',
+    txCharacteristic: '0000ffe1-0000-1000-8000-00805f9b34fb', // transmit is from the phone's perspective
+    rxCharacteristic: '0000ffe1-0000-1000-8000-00805f9b34fb'  // receive is from the phone's perspective
+};*/
+var bluefruit = {
+    serviceUUID: 'ffe0',
+    txCharacteristic: 'ffe1', // transmit is from the phone's perspective
+    rxCharacteristic: 'ffe1'  // receive is from the phone's perspective
+};
 
 var app = {
     initialize: function() {
         this.bindEvents();
-        this.showMainPage();
+        detailPage.hidden = true;
     },
     bindEvents: function() {
-
-        var TOUCH_START = 'touchstart';
-        if (window.navigator.msPointerEnabled) { // windows phone
-            TOUCH_START = 'MSPointerDown';
-        }
         document.addEventListener('deviceready', this.onDeviceReady, false);
-        refreshButton.addEventListener(TOUCH_START, this.refreshDeviceList, false);
-        sendButton.addEventListener(TOUCH_START, this.sendData, false);
-        disconnectButton.addEventListener(TOUCH_START, this.disconnect, false);
-        deviceList.addEventListener('touchstart', this.connect, false);
+        refreshButton.addEventListener('touchstart', this.refreshDeviceList, false);
+        sendButton.addEventListener('click', this.sendData, false);
+        disconnectButton.addEventListener('touchstart', this.disconnect, false);
+        deviceList.addEventListener('touchstart', this.connect, false); // assume not scrolling
     },
     onDeviceReady: function() {
         app.refreshDeviceList();
     },
     refreshDeviceList: function() {
-        bluetoothSerial.list(app.onDeviceList, app.onError);
-    },
-    onDeviceList: function(devices) {
-        var option;
-
-        // remove existing devices
-        deviceList.innerHTML = "";
-        app.setStatus("");
-
-        devices.forEach(function(device) {
-
-            var listItem = document.createElement('li'),
-                html = '<b>' + device.name + '</b><br/>' + device.id;
-
-            listItem.innerHTML = html;
-
-            if (cordova.platformId === 'windowsphone') {
-              // This is a temporary hack until I get the list tap working
-              var button = document.createElement('button');
-              button.innerHTML = "Conectar";
-              button.addEventListener('click', app.connect, false);
-              button.dataset = {};
-              button.dataset.deviceId = device.id;
-              listItem.appendChild(button);
-            } else {
-              listItem.dataset.deviceId = device.id;
-            }
-            deviceList.appendChild(listItem);
-        });
-
-        if (devices.length === 0) {
-
-            option = document.createElement('option');
-            option.innerHTML = "Sin dispositivos Bluetooth";
-            deviceList.appendChild(option);
-
-            if (cordova.platformId === "ios") { // BLE
-                app.setStatus("No hay dispositivos Bluetooth encontrados.");
-            } else { // Android or Windows Phone
-                app.setStatus("Por favor, emparejar dispositivo Bluetooth.");
-            }
-
+        deviceList.innerHTML = ''; // empties the list
+        if (cordova.platformId === 'android') { // Android filtering is broken
+            ble.scan([], 5, app.onDiscoverDevice, app.onError);
         } else {
-            app.setStatus("Encontrados " + devices.length + " dispositivos" + (devices.length === 1 ? "." : "s."));
+            ble.scan([bluefruit.serviceUUID], 5, app.onDiscoverDevice, app.onError);
         }
+    },
+    onDiscoverDevice: function(device) {
+        var listItem = document.createElement('li'),
+            html = '<b>' + device.name + '</b><br/>' +
+                'RSSI: ' + device.rssi + '&nbsp;|&nbsp;' +
+                device.id;
 
+        listItem.dataset.deviceId = device.id;
+        listItem.innerHTML = html;
+        deviceList.appendChild(listItem);
     },
     connect: function(e) {
-        var onConnect = function() {
-                // subscribe for incoming data
-                bluetoothSerial.subscribe('\n', app.onData, app.onError);
+        var deviceId = e.target.dataset.deviceId,
+            onConnect = function(peripheral) {
+                app.determineWriteType(peripheral);
 
+                // subscribe for incoming data
+                ble.startNotification(deviceId, bluefruit.serviceUUID, bluefruit.rxCharacteristic, app.onData, app.onError);
+                sendButton.dataset.deviceId = deviceId;
+                disconnectButton.dataset.deviceId = deviceId;
                 resultDiv.innerHTML = "";
-                app.setStatus("Conectado");
                 app.showDetailPage();
             };
 
-        var deviceId = e.target.dataset.deviceId;
-        if (!deviceId) { // try the parent
-            deviceId = e.target.parentNode.dataset.deviceId;
+        ble.connect(deviceId, onConnect, app.onError);
+    },
+    determineWriteType: function(peripheral) {
+        // Adafruit nRF8001 breakout uses WriteWithoutResponse for the TX characteristic
+        // Newer Bluefruit devices use Write Request for the TX characteristic
+
+        var characteristic = peripheral.characteristics.filter(function(element) {
+            if (element.characteristic.toLowerCase() === bluefruit.txCharacteristic) {
+                return element;
+            }
+        })[0];
+
+        if (characteristic.properties.indexOf('WriteWithoutResponse') > -1) {
+            app.writeWithoutResponse = true;
+        } else {
+            app.writeWithoutResponse = false;
         }
 
-        bluetoothSerial.connect(deviceId, onConnect, app.onError);
     },
     onData: function(data) { // data received from Arduino
         console.log(data);
-        resultDiv.innerHTML = resultDiv.innerHTML + data + "<br/>";
+        resultDiv.innerHTML = resultDiv.innerHTML + "Recibir: " + bytesToString(data) + "<br/>";
         resultDiv.scrollTop = resultDiv.scrollHeight;
-        inu = data;
+
+        inu = parseInt( bytesToString(data) );
     },
     sendData: function(event) { // send data to Arduino
 
@@ -118,34 +125,40 @@ var app = {
         };
 
         var failure = function() {
-            alert("Failed writing data to Bluetooth peripheral");
+            alert("Failed writing data to the bluefruit le");
         };
 
-        var data = messageInput.value;
-        bluetoothSerial.write(data, success, failure);
+        var data = stringToBytes(messageInput.value);
+        var deviceId = event.target.dataset.deviceId;
+
+        if (app.writeWithoutResponse) {
+            ble.writeWithoutResponse(
+                deviceId,
+                bluefruit.serviceUUID,
+                bluefruit.txCharacteristic,
+                data, success, failure
+            );
+        } else {
+            ble.write(
+                deviceId,
+                bluefruit.serviceUUID,
+                bluefruit.txCharacteristic,
+                data, success, failure
+            );
+        }
+
     },
     disconnect: function(event) {
-        bluetoothSerial.disconnect(app.showMainPage, app.onError);
+        var deviceId = event.target.dataset.deviceId;
+        ble.disconnect(deviceId, app.showMainPage, app.onError);
     },
     showMainPage: function() {
-        mainPage.style.display = "";
-        detailPage.style.display = "none";
+        mainPage.hidden = false;
+        detailPage.hidden = true;
     },
     showDetailPage: function() {
-        mainPage.style.display = "none";
-        detailPage.style.display = "";
-    },
-    setStatus: function(message) {
-        console.log(message);
-
-        window.clearTimeout(app.statusTimeout);
-        statusDiv.innerHTML = message;
-        statusDiv.className = 'fadein';
-
-        // automatically clear the status with a timer
-        app.statusTimeout = setTimeout(function () {
-            statusDiv.className = 'fadeout';
-        }, 5000);
+        mainPage.hidden = true;
+        detailPage.hidden = false;
     },
     onError: function(reason) {
         alert("ERROR: " + reason); // real apps should use notification.alert
