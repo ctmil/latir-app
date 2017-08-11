@@ -16,6 +16,8 @@
 /* global detailPage, resultDiv, messageInput, sendButton, disconnectButton */
 /* global ble  */
 /* jshint browser: true , devel: true*/
+var inu = 0;
+
 'use strict';
 
 // ASCII only
@@ -110,7 +112,7 @@ var app = {
 
     },
     onData: function(data) { // data received from Arduino
-        console.log(data);
+        console.log(bytesToString(data));
         resultDiv.innerHTML = resultDiv.innerHTML + "Recibir: " + bytesToString(data) + "<br/>";
         resultDiv.scrollTop = resultDiv.scrollHeight;
 
