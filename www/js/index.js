@@ -58,13 +58,21 @@ var app = {
         app.refreshDeviceList();
 
         osc = new OSC();
-
-        window.resolveLocalFileSystemURL(cordova.file.externalApplicationStorageDirectory, function(dir) {
-      		dir.getFile("log.txt", {create:true}, function(file) {
-      			logOb = file;
-      			//writeLog("Start");//Test
-      		});
-      	});
+				if (cordova.platformId === 'android') {
+	        window.resolveLocalFileSystemURL(cordova.file.externalApplicationStorageDirectory, function(dir) {
+	      		dir.getFile("log.txt", {create:true}, function(file) {
+	      			logOb = file;
+	      			//writeLog("Start");//Test
+	      		});
+	      	});
+				}else{
+					window.resolveLocalFileSystemURL(cordova.file.documentsDirectory, function(dir) {
+	      		dir.getFile("log.txt", {create:true}, function(file) {
+	      			logOb = file;
+	      			//writeLog("Start");//Test
+	      		});
+	      	});
+				}
     },
     refreshDeviceList: function() {
         deviceList.innerHTML = ''; // empties the list
