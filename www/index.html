@@ -12,6 +12,12 @@
     <body>
         <div class="app">
             <h1>Latir App</h1>
+            <div id="osc">
+              <label for="ips">IP:</label>
+              <input type="text" id="ips" name="ips" value="192.168.1.135">
+              <label for="port">Port:</label>
+              <input type="text" id="port" name="port" value="8001">
+            </div>
             <div id="mainPage">
                 <ul id="deviceList">
                 </ul>
@@ -39,12 +45,16 @@
                         background(0);
                       }
                       line((frameCount%300)-1, 100-lastFrameY, (frameCount%300), 100);
-                      lastFrameY = map(inu, 0, 1023, 0, 100);
+                      lastFrameY = map(inu, 0, 255, 0, 100);
                     }
                   </script>
                 </div>
             </div>
         </div>
+        <footer>
+          <button id="live" type="button" name="button" class="boton">En Vivo</button>
+          <button id="storage" type="button" name="button" class="boton">Guardar</button>
+        </footer>
         <script type="text/javascript" src="cordova.js"></script>
         <script type="text/javascript" src="js/index.js"></script>
         <script type="text/javascript">

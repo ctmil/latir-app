@@ -1,24 +1,20 @@
-// (c) 2014 Don Coleman
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 /* global mainPage, deviceList, refreshButton */
 /* global detailPage, resultDiv, messageInput, sendButton, disconnectButton */
 /* global ble  */
 /* jshint browser: true , devel: true*/
 var inu = 0;
+var osc;
+var live = false;
+var save = true;
+
+var logOb;
 
 'use strict';
+
+function fail(e) {
+	console.log("FileSystem Error");
+	console.dir(e);
+}
 
 // ASCII only
 function bytesToString(buffer) {
@@ -60,6 +56,15 @@ var app = {
     },
     onDeviceReady: function() {
         app.refreshDeviceList();
+
+        osc = new OSC();
+
+        window.resolveLocalFileSystemURL(cordova.file.externalApplicationStorageDirectory, function(dir) {
+      		dir.getFile("log.txt", {create:true}, function(file) {
+      			logOb = file;
+      			//writeLog("Start");//Test
+      		});
+      	});
     },
     refreshDeviceList: function() {
         deviceList.innerHTML = ''; // empties the list
@@ -112,11 +117,23 @@ var app = {
 
     },
     onData: function(data) { // data received from Arduino
-        console.log(bytesToString(data));
-        resultDiv.innerHTML = resultDiv.innerHTML + "Recibir: " + bytesToString(data) + "<br/>";
+        resultDiv.innerHTML = "Recibiendo: " + bytesToString(data) + "<br/>";
         resultDiv.scrollTop = resultDiv.scrollHeight;
 
         inu = parseInt( bytesToString(data) );
+
+        if(live === true){
+          var ipAd = document.getElementById('ips').value;
+          var portAd = parseInt( document.getElementById('port').value);
+          osc.send({
+              remoteAddress: ipAd,
+              remotePort: portAd,
+              address: '/ecg',
+              arguments: [inu]
+          });
+        }else if(save === true){
+          writeLog( bytesToString(data) );
+        }
     },
     sendData: function(event) { // send data to Arduino
 
@@ -166,3 +183,40 @@ var app = {
         alert("ERROR: " + reason); // real apps should use notification.alert
     }
 };
+
+//STORAGE
+function writeLog(str) {
+	if(!logOb) return;
+	var log = str;
+	console.log("going to log "+log);
+	logOb.createWriter(function(fileWriter) {
+
+		fileWriter.seek(fileWriter.length);
+
+		var blob = new Blob([log], {type:'text/plain'});
+		fileWriter.write(blob);
+		console.log("ok, in theory i worked");
+	}, fail);
+}
+
+document.getElementById("live").addEventListener("click", function(){
+    live = true;
+    save = false;
+
+    document.getElementById("live").style.background = "#ff0926";
+    document.getElementById("live").style.color = "#eee";
+
+    document.getElementById("storage").style.background = "#fff";
+    document.getElementById("storage").style.color = "#444";
+});
+
+document.getElementById("storage").addEventListener("click", function(){
+    live = false;
+    save = true;
+
+    document.getElementById("storage").style.background = "#008cdc";
+    document.getElementById("storage").style.color = "#eee";
+
+    document.getElementById("live").style.background = "#fff";
+    document.getElementById("live").style.color = "#444";
+});
