@@ -58,21 +58,34 @@ var app = {
         app.refreshDeviceList();
 
         osc = new OSC();
-				if (cordova.platformId === 'android') {
-	        window.resolveLocalFileSystemURL(cordova.file.externalApplicationStorageDirectory, function(dir) {
-	      		dir.getFile("log.txt", {create:true}, function(file) {
-	      			logOb = file;
-	      			//writeLog("Start");//Test
-	      		});
-	      	});
-				}else{
-					window.resolveLocalFileSystemURL(cordova.file.documentsDirectory, function(dir) {
-	      		dir.getFile("log.txt", {create:true}, function(file) {
-	      			logOb = file;
-	      			//writeLog("Start");//Test
-	      		});
-	      	});
-				}
+
+				app.logFile("test");
+
+				live = false;
+				save = true;
+
+				document.getElementById("storage").style.background = "#008cdc";
+		    document.getElementById("storage").style.color = "#eee";
+
+		    document.getElementById("live").style.background = "#fff";
+		    document.getElementById("live").style.color = "#444";
+    },
+		logFile: function(e) {
+			if (cordova.platformId === 'android') {
+				window.resolveLocalFileSystemURL(cordova.file.externalApplicationStorageDirectory, function(dir) {
+					dir.getFile(e+"_log.txt", {create:true}, function(file) {
+						logOb = file;
+						//writeLog("Start");//Test
+					});
+				});
+			}else{
+				window.resolveLocalFileSystemURL(cordova.file.documentsDirectory, function(dir) {
+					dir.getFile(e+"_log.txt", {create:true}, function(file) {
+						logOb = file;
+						//writeLog("Start");//Test
+					});
+				});
+			}
     },
     refreshDeviceList: function() {
         deviceList.innerHTML = ''; // empties the list
@@ -130,7 +143,7 @@ var app = {
 
         inu = parseInt( bytesToString(data) );
 
-        if(live === true){
+        if(live === true && save === false){
           var ipAd = document.getElementById('ips').value;
           var portAd = parseInt( document.getElementById('port').value);
           osc.send({
@@ -139,7 +152,7 @@ var app = {
               address: '/ecg',
               arguments: [inu]
           });
-        }else if(save === true){
+        }else if(save === true && live === false){
           writeLog( bytesToString(data) );
         }
     },
@@ -196,17 +209,16 @@ var app = {
 function writeLog(str) {
 	if(!logOb) return;
 	var log = str;
-	console.log("going to log "+log);
 	logOb.createWriter(function(fileWriter) {
 
 		fileWriter.seek(fileWriter.length);
 
 		var blob = new Blob([log], {type:'text/plain'});
 		fileWriter.write(blob);
-		console.log("ok, in theory i worked");
 	}, fail);
 }
 
+//LISTENERs
 document.getElementById("live").addEventListener("click", function(){
     live = true;
     save = false;
@@ -227,4 +239,10 @@ document.getElementById("storage").addEventListener("click", function(){
 
     document.getElementById("live").style.background = "#fff";
     document.getElementById("live").style.color = "#444";
+});
+
+document.getElementById("log_name").addEventListener("click", function(){
+	var name = document.getElementById('name').value;
+
+	app.logFile(name);
 });
