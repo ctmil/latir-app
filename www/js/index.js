@@ -73,6 +73,8 @@ var app = {
 		logFile: function(e) {
 			if (cordova.platformId === 'android') {
 				window.resolveLocalFileSystemURL(cordova.file.externalApplicationStorageDirectory, function(dir) {
+					console.log("Android");
+					console.log(dir);
 					dir.getFile(e+"_log.txt", {create:true}, function(file) {
 						logOb = file;
 						//writeLog("Start");//Test
@@ -80,6 +82,8 @@ var app = {
 				});
 			}else{
 				window.resolveLocalFileSystemURL(cordova.file.documentsDirectory, function(dir) {
+					console.log("iPhone");
+					console.log(dir);
 					dir.getFile(e+"_log.txt", {create:true}, function(file) {
 						logOb = file;
 						//writeLog("Start");//Test
@@ -215,6 +219,7 @@ function writeLog(str) {
 
 		var blob = new Blob([log], {type:'text/plain'});
 		fileWriter.write(blob);
+		console.log("OK, SEND");
 	}, fail);
 }
 
