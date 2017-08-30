@@ -1,7 +1,7 @@
 /* global mainPage, deviceList, refreshButton */
 /* global detailPage, resultDiv, messageInput, sendButton, disconnectButton */
 /* global ble  */
-/* jshint browser: true , devel: true*/
+/* jshint browser: true , devel: true*/ //
 var inu = 0;
 var osc;
 var live = false;
