@@ -44,6 +44,7 @@ header form label{
   float:left;
   margin-right:5px;
   font-weight: bold;
+  padding-top:8px;
 }
 header form button{
   margin:0;
@@ -60,7 +61,7 @@ button {
     font-size: 1.2em;
 }
 
-/* TODO */
+/* */
 input[type=range] {
     width: 100%;
 }
@@ -109,11 +110,19 @@ footer{
   bottom:0;
   left:0;
   width:100%;
-  text-align:center;
-  background:rgba(200,200,200,0.1);
+  background:#eee;
   border-top:1px solid #aaa;
   margin:0;
   padding:0;
+  text-align:center;
+}
+#sinc{
+  border:1px solid #222;
+  margin:0;
+}
+#sinc:active{
+  background:#222;
+  color:#eee;
 }
 #live{
   border:1px solid #ff0926;
@@ -150,6 +159,10 @@ footer{
 }
 
 /**/
+#deviceList{
+  border-bottom: 1px solid #444;
+}
+/**/
 #osc{
   padding:0 10px;
 }
@@ -162,4 +175,5 @@ footer{
   width:100%;
   height:22px;
   margin-bottom:10px;
+  font-size:18px;
 }

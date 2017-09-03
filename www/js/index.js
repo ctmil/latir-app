@@ -206,6 +206,31 @@ var app = {
     },
     onError: function(reason) {
         alert("ERROR: " + reason); // real apps should use notification.alert
+    },
+		sendFile: function() {
+			//Data IP
+			var ipAd = document.getElementById('ips').value;
+			var portAd = parseInt( document.getElementById('port').value);
+
+			//Data File
+      var fileURL = "file:///storage/emulated/0/kbatterydoctor/channel.txt";
+      var fileName = fileURL.substr(fileURL.lastIndexOf('/') + 1).slice(0, -4);
+
+      var options = new FileUploadOptions();
+      options.fileKey = "file";
+      options.mimeType = "text/plain";
+      options.fileName = fileName;
+
+      var ft = new FileTransfer();
+      ft.upload(fileURL, encodeURI(ipAd+":"+portAd+"/api/file/"),
+        function (res) {
+          console.log("Code = " + res.responseCode);
+        },
+        function (error) {
+          console.log(error);
+          alert("An error has occurred: Code = " + error.code);
+        },
+        options);
     }
 };
 
@@ -219,7 +244,6 @@ function writeLog(str) {
 
 		var blob = new Blob([log], {type:'text/plain'});
 		fileWriter.write(blob);
-		console.log("OK, SEND");
 	}, fail);
 }
 
@@ -250,4 +274,8 @@ document.getElementById("log_name").addEventListener("click", function(){
 	var name = document.getElementById('name').value;
 
 	app.logFile(name);
+});
+
+document.getElementById("sinc").addEventListener("click", function(){
+	app.sendFile();
 });
