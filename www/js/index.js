@@ -236,7 +236,7 @@ var app = {
 			if (cordova.platformId === 'android') {
       	var fileURL = "file:///storage/emulated/0"+e;
 			}else{
-				//var fileURL = "file:///storage/emulated/0"+e;
+				var fileURL = dirPath+e.replace("/","");
 			}
       var fileName = fileURL.substr(fileURL.lastIndexOf('/') + 1).slice(0, -4);
 
@@ -280,7 +280,7 @@ function listDir(path){
 					for (var i = 0; i < entries.length; i++) {
 						if(entries[i].isFile === true){
 							console.log(entries[i].fullPath);
-							//app.sendFile(entries[i].fullPath);
+							app.sendFile(entries[i].fullPath);
 						}
 					}
         },
