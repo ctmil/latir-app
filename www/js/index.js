@@ -278,7 +278,7 @@ function listDir(path){
 					for (var i = 0; i < entries.length; i++) {
 						if(entries[i].isFile === true){
 							console.log(entries[i].fullPath);
-							app.sendFile(entries[i].fullPath);
+							//app.sendFile(entries[i].fullPath);
 						}
 					}
         },
