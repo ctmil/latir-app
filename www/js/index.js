@@ -76,8 +76,9 @@ var app = {
 			if (cordova.platformId === 'android') {
 				window.resolveLocalFileSystemURL(cordova.file.externalApplicationStorageDirectory, function(dir) {
 					console.log("Android");
-					console.log(dir);
+					//console.log(dir);
 					dirPath = dir.nativeURL;
+					console.log(dirPath);
 					var currentdate = new Date();
 					var datetime = currentdate.getDate() + "_"
 				                + (currentdate.getMonth()+1)  + "_"
@@ -93,8 +94,9 @@ var app = {
 			}else{
 				window.resolveLocalFileSystemURL(cordova.file.documentsDirectory, function(dir) {
 					console.log("iPhone");
-					console.log(dir);
+					//console.log(dir);
 					dirPath = dir.nativeURL;
+					console.log(dirPath);
 					var currentdate = new Date();
 					var datetime = currentdate.getDate() + "_"
 				                + (currentdate.getMonth()+1)  + "_"
