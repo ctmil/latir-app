@@ -7,6 +7,8 @@ var osc;
 var live = false;
 var save = true;
 
+var dirPath = "";
+
 var logOb;
 
 'use strict';
@@ -75,7 +77,15 @@ var app = {
 				window.resolveLocalFileSystemURL(cordova.file.externalApplicationStorageDirectory, function(dir) {
 					console.log("Android");
 					console.log(dir);
-					dir.getFile(e+"_log.txt", {create:true}, function(file) {
+					dirPath = dir.nativeURL;
+					var currentdate = new Date();
+					var datetime = currentdate.getDate() + "_"
+				                + (currentdate.getMonth()+1)  + "_"
+				                + currentdate.getFullYear() + "_"
+				                + currentdate.getHours() + "_"
+				                + currentdate.getMinutes() + "_"
+				                + currentdate.getSeconds();
+					dir.getFile(e+"_"+datetime+".txt", {create:true}, function(file) {
 						logOb = file;
 						//writeLog("Start");//Test
 					});
@@ -84,7 +94,15 @@ var app = {
 				window.resolveLocalFileSystemURL(cordova.file.documentsDirectory, function(dir) {
 					console.log("iPhone");
 					console.log(dir);
-					dir.getFile(e+"_log.txt", {create:true}, function(file) {
+					dirPath = dir.nativeURL;
+					var currentdate = new Date();
+					var datetime = currentdate.getDate() + "_"
+				                + (currentdate.getMonth()+1)  + "_"
+				                + currentdate.getFullYear() + "_"
+				                + currentdate.getHours() + "_"
+				                + currentdate.getMinutes() + "_"
+				                + currentdate.getSeconds();
+					dir.getFile(e+"_"+datetime+".txt", {create:true}, function(file) {
 						logOb = file;
 						//writeLog("Start");//Test
 					});
@@ -207,13 +225,17 @@ var app = {
     onError: function(reason) {
         alert("ERROR: " + reason); // real apps should use notification.alert
     },
-		sendFile: function() {
+		sendFile: function(e) {
 			//Data IP
 			var ipAd = document.getElementById('ips').value;
 			var portAd = parseInt( document.getElementById('port').value);
 
 			//Data File
-      var fileURL = "file:///storage/emulated/0/kbatterydoctor/channel.txt";
+			if (cordova.platformId === 'android') {
+      	var fileURL = "file:///storage/emulated/0"+e;
+			}else{
+				//var fileURL = "file:///storage/emulated/0"+e;
+			}
       var fileName = fileURL.substr(fileURL.lastIndexOf('/') + 1).slice(0, -4);
 
       var options = new FileUploadOptions();
@@ -222,7 +244,7 @@ var app = {
       options.fileName = fileName;
 
       var ft = new FileTransfer();
-      ft.upload(fileURL, encodeURI(ipAd+":"+portAd+"/api/file/"),
+      ft.upload(fileURL, encodeURI("http://"+ipAd+":"+portAd+"/api/file/"),
         function (res) {
           console.log("Code = " + res.responseCode);
         },
@@ -245,6 +267,29 @@ function writeLog(str) {
 		var blob = new Blob([log], {type:'text/plain'});
 		fileWriter.write(blob);
 	}, fail);
+}
+
+function listDir(path){
+  window.resolveLocalFileSystemURL(path,
+    function (fileSystem) {
+      var reader = fileSystem.createReader();
+      reader.readEntries(
+        function (entries) {
+					for (var i = 0; i < entries.length; i++) {
+						if(entries[i].isFile === true){
+							console.log(entries[i].fullPath);
+							app.sendFile(entries[i].fullPath);
+						}
+					}
+        },
+        function (err) {
+          console.log(err);
+        }
+      );
+    }, function (err) {
+      console.log(err);
+    }
+  );
 }
 
 //LISTENERs
@@ -277,5 +322,5 @@ document.getElementById("log_name").addEventListener("click", function(){
 });
 
 document.getElementById("sinc").addEventListener("click", function(){
-	app.sendFile();
+	listDir(dirPath);
 });
