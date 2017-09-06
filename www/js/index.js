@@ -249,10 +249,18 @@ var app = {
       ft.upload(fileURL, encodeURI("http://"+ipAd+":"+portAd+"/api/file/"),
         function (res) {
           console.log("Code = " + res.responseCode);
+					window.resolveLocalFileSystemURL(fileURL, function(file) {
+		        file.remove(function(){
+		          console.log("deleted");
+		        },function (error) {
+		          console.log(error);
+		        });
+		      }, function (error) {
+	          console.log(error);
+	        });
         },
         function (error) {
           console.log(error);
-          alert("An error has occurred: Code = " + error.code);
         },
         options);
     }
