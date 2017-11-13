@@ -58,6 +58,7 @@ var app = {
     },
     onDeviceReady: function() {
         app.refreshDeviceList();
+	cordova.plugins.backgroundMode.enable();
 
         osc = new OSC();
 
