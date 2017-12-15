@@ -10,6 +10,7 @@ var save = true;
 var dirPath = "";
 
 var logOb;
+var logOb_2;
 
 'use strict';
 
@@ -58,7 +59,7 @@ var app = {
     },
     onDeviceReady: function() {
         app.refreshDeviceList();
-	cordova.plugins.backgroundMode.enable();
+				cordova.plugins.backgroundMode.enable();
 
         osc = new OSC();
 
@@ -73,7 +74,7 @@ var app = {
 		    document.getElementById("live").style.background = "#fff";
 		    document.getElementById("live").style.color = "#444";
     },
-		logFile: function(e) {
+		logFile: function(e, t) {
 			if (cordova.platformId === 'android') {
 				window.resolveLocalFileSystemURL(cordova.file.externalApplicationStorageDirectory, function(dir) {
 					console.log("Android");
@@ -88,7 +89,11 @@ var app = {
 				                + currentdate.getMinutes() + "_"
 				                + currentdate.getSeconds();
 					dir.getFile(e+"_"+datetime+".txt", {create:true}, function(file) {
-						logOb = file;
+						if(t){
+							logOb = file;
+						}else{
+							logOb_2 = file;
+						}
 						//writeLog("Start");//Test
 					});
 				});
@@ -106,7 +111,11 @@ var app = {
 				                + currentdate.getMinutes() + "_"
 				                + currentdate.getSeconds();
 					dir.getFile(e+"_"+datetime+".txt", {create:true}, function(file) {
-						logOb = file;
+						if(t){
+							logOb = file;
+						}else{
+							logOb_2 = file;
+						}
 						//writeLog("Start");//Test
 					});
 				});
@@ -332,8 +341,10 @@ document.getElementById("storage").addEventListener("click", function(){
 
 document.getElementById("log_name").addEventListener("click", function(){
 	var name = document.getElementById('name').value;
+	var name_2 = document.getElementById('name2').value;
 
-	app.logFile(name);
+	app.logFile(name, true);
+	app.logFile(name_2, false);
 });
 
 document.getElementById("sinc").addEventListener("click", function(){
