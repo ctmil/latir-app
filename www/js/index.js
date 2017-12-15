@@ -239,6 +239,7 @@ var app = {
 			}else{
 				var fileURL = dirPath+e.replace("/","");
 			}
+			console.log(fileURL);
       var fileName = fileURL.substr(fileURL.lastIndexOf('/') + 1).slice(0, -4);
 
       var options = new FileUploadOptions();
@@ -281,11 +282,14 @@ function writeLog(str) {
 }
 
 function listDir(path){
+	console.log("listDir Works");
+	console.log(path);
   window.resolveLocalFileSystemURL(path,
     function (fileSystem) {
       var reader = fileSystem.createReader();
       reader.readEntries(
         function (entries) {
+					console.log(entries);
 					for (var i = 0; i < entries.length; i++) {
 						if(entries[i].isFile === true){
 							console.log(entries[i].fullPath);
